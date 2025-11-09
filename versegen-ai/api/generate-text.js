@@ -1,6 +1,9 @@
-// --- Vercel Serverless Function ---
-// This file MUST be placed in the /api directory.
-// It will handle POST requests to /api/generate-text
+import { GoogleGenerativeAI } from "@google/genai";
+
+// Vercel handles the environment variable
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = new GoogleGenerativeAI(apiKey);
+const model = "gemini-2.5-flash";
 
 export default async function handler(request, response) {
     if (request.method !== 'POST') {
@@ -8,9 +11,7 @@ export default async function handler(request, response) {
     }
 
     const { prompt, toolType } = request.body;
-    const apiKey = process.env.GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
+    
     if (!apiKey) {
         return response.status(500).json({ error: 'API key not configured.' });
     }
@@ -18,76 +19,45 @@ export default async function handler(request, response) {
         return response.status(400).json({ error: 'Prompt is required.' });
     }
 
-    // --- System Prompt Engineering ---
-    // This is where you "train" the AI to be your specific tool.
-    let systemPrompt = "You are a helpful assistant.";
+    // --- System Prompt Engineering for Specialized Tools ---
+    let systemPrompt = "You are a helpful and concise assistant.";
 
     if (toolType === 'creator') {
-        systemPrompt = `You are VerseGen's Content Creator AI, a world-class expert in Fortnite YouTube content. 
-        Your goal is to help players grow their channels. 
-        - When asked for ideas, provide 5 viral-worthy video titles with brief descriptions.
-        - When asked for a script, provide a clear outline (Hook, Intro, 3x Main Points, Call to Action).
-        - Be concise, actionable, and use language that Fortnite players understand (e.g., 'W-Key', 'box fight', 'end-game').
-        - Do not be overly formal. Be encouraging.`;
+        systemPrompt = `You are VerseGen's Content Creator AI, a world-class expert in Fortnite YouTube content, branding, and scripting. 
+        Your goal is to provide concise, actionable, and viral-worthy ideas for titles, descriptions, scripts, or channel branding.
+        Format your response clearly using markdown headings or lists. Focus on Fortnite strategy, meta, and trends.`;
     } else if (toolType === 'hardware') {
-        systemPrompt = `You are VerseGen's Hardware Builder AI, an expert PC builder specializing in Fortnite performance.
-        - Your response MUST be a PC build list or a direct answer to the hardware question.
-        - When asked for a build, format the response as a Markdown table with columns: Part, Item, and Reason/Notes.
-        - Prioritize high FPS and low latency for Fortnite (e.g., strong CPU, fast RAM).
-        - Always stick to the user's budget.
-        - Do not suggest peripherals unless asked.`;
+        // Hardware Builder AI logic
+        systemPrompt = `You are VerseGen's Advanced Hardware Builder AI, an expert PC builder specializing exclusively in maximizing Fortnite FPS and minimizing latency.
+        - Your response MUST be a detailed PC build list or a direct, expert answer to the hardware question.
+        - When suggesting a build, format the response as a clear Markdown table with columns: **Part**, **Item**, **Price Estimate (USD)**, and **Fortnite FPS Rationale**.
+        - Prioritize CPU and high-speed RAM for Fortnite performance. Always stick to the user's stated budget.`;
+    } else if (toolType === 'calendar') {
+        // Elite Content Calendar AI logic
+        systemPrompt = `You are VerseGen's Elite Content Calendar Generation AI, specializing in planning viral Fortnite content streams for YouTube and social platforms.
+        - Generate a structured content calendar (e.g., 7 days or 30 days) based on the user's prompt.
+        - Format the output as a Markdown table or list with clear structure (e.g., Day 1: Topic, Video Type, Goal).
+        - Focus on strategy, trending topics, and growth hooks.`;
     }
-    
-    const payload = {
-        contents: [{ 
-            parts: [{ text: prompt }] 
-        }],
-        systemInstruction: {
-            parts: [{ text: systemPrompt }]
-        },
-    };
 
     try {
-        // Implement exponential backoff for retries
-        let res;
-        let retries = 3;
-        let delay = 1000;
-        
-        for (let i = 0; i < retries; i++) {
-            res = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (res.ok) {
-                break; // Success
+        const responseData = await ai.models.generateContent({
+            model: model,
+            contents: [{ parts: [{ text: prompt }] }],
+            config: {
+                systemInstruction: systemPrompt
             }
+        });
 
-            if (res.status === 429 || res.status >= 500) {
-                // Throttling or server error, wait and retry
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2;
-            } else {
-                // Other client error, don't retry
-                throw new Error(`API request failed with status ${res.status}`);
-            }
+        const text = responseData.text;
+        if (!text) {
+             return response.status(500).json({ error: 'AI failed to generate a response.', details: responseData });
         }
         
-        if (!res.ok) {
-            throw new Error(`API request failed after ${retries} retries.`);
-        }
+        return response.status(200).json({ text });
 
-        const data = await res.json();
-        
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const text = data.candidates[0].content.parts[0].text;
-            return response.status(200).json({ text });
-        } else {
-            return response.status(500).json({ error: 'Invalid API response structure.', details: data });
-        }
     } catch (error) {
-        console.error('Error calling Gemini API:', error);
-        return response.status(500).json({ error: 'Failed to generate content.', details: error.message });
+        console.error('Error calling Gemini API:', error.message);
+        return response.status(500).json({ error: 'Failed to communicate with AI service.', details: error.message });
     }
 }
