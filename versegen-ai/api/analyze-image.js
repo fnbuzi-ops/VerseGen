@@ -1,6 +1,9 @@
-// --- Vercel Serverless Function ---
-// This file MUST be placed in the /api directory.
-// It will handle POST requests to /api/analyze-image
+import { GoogleGenerativeAI } from "@google/genai";
+
+// Vercel handles the environment variable
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = new GoogleGenerativeAI(apiKey);
+const model = "gemini-2.5-flash"; // Supports image understanding
 
 export default async function handler(request, response) {
     if (request.method !== 'POST') {
@@ -8,76 +11,50 @@ export default async function handler(request, response) {
     }
 
     const { prompt, base64Image, mimeType } = request.body;
-    const apiKey = process.env.GEMINI_API_KEY;
     
-    // Use gemini-2.5-flash-preview-09-2025 as it supports image/video understanding
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-    if (!apiKey) {
-        return response.status(500).json({ error: 'API key not configured.' });
-    }
-    if (!prompt || !base64Image || !mimeType) {
-        return response.status(400).json({ error: 'Prompt, base64Image, and mimeType are required.' });
+    if (!apiKey || !prompt || !base64Image || !mimeType) {
+        return response.status(400).json({ error: 'Missing required parameters.' });
     }
 
-    const systemPrompt = `You are VerseGen's elite Fortnite Coaching AI. You are analyzing a static screenshot from a player's VOD or clip.
-    - Be direct, professional, and tactical.
-    - Start by identifying what's happening in the image (e.g., "I see you're in a box fight," "This looks like an end-game rotation").
-    - Analyze the user's position, loadout, crosshair placement, and visible UI (health, mats).
-    - Provide 3-5 scannable, actionable bullet points for improvement based *only* on the image and the user's question.
-    - Do not give generic advice. Be specific to the image.
-    - If the image is unclear, state that.
-    - Conclude with one positive, encouraging sentence.`;
-
-    const payload = {
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    { 
-                        text: prompt 
-                    },
-                    {
-                        inlineData: {
-                            mimeType: mimeType, // e.g., "image/jpeg"
-                            data: base64Image
-                        }
-                    }
-                ]
-            }
-        ],
-        systemInstruction: {
-            parts: [{ text: systemPrompt }]
-        },
-    };
+    const systemPrompt = `You are VerseGen's Fortnite Coaching AI. Your models are trained by analyzing thousands of hours of professional Fortnite VODs and competitive play. 
+    You are analyzing a static gameplay screenshot provided by the user, and answering their question based on the visual evidence.
+    - Identify the key elements: position, loadout, crosshair placement, remaining players, zone location, and material count.
+    - Provide 3-5 specific, actionable bullet points for improvement or strategic advice.
+    - Focus strictly on competitive Fortnite terminology and strategy (e.g., 'piece control,' 'refresh,' 'first zone pull').
+    - Do not offer generic advice. Be encouraging yet critical.`;
 
     try {
-        let res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+        const imagePart = {
+            inlineData: {
+                mimeType: mimeType,
+                data: base64Image
+            }
+        };
+
+        const responseData = await ai.models.generateContent({
+            model: model,
+            contents: [
+                { role: "user", parts: [{ text: prompt }, imagePart] }
+            ],
+            config: {
+                systemInstruction: systemPrompt
+            }
         });
 
-        if (!res.ok) {
-            const errorBody = await res.json();
-            console.error('API Error Response:', errorBody);
-            throw new Error(`API request failed with status ${res.status}: ${errorBody.error?.message || 'Unknown error'}`);
+        const text = responseData.text;
+        
+        if (responseData.candidates?.[0]?.finishReason === 'SAFETY') {
+            return response.status(400).json({ error: 'Analysis blocked due to content safety policy. Please use a different image.' });
         }
 
-        const data = await res.json();
-        
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const text = data.candidates[0].content.parts[0].text;
-            return response.status(200).json({ text });
-        } else {
-             // Handle cases where the model might refuse to answer
-            if (data.candidates && data.candidates[0].finishReason === 'SAFETY') {
-                return response.status(400).json({ error: 'Analysis blocked by safety filters. Try a different image or prompt.' });
-            }
-            return response.status(500).json({ error: 'Invalid API response structure.', details: data });
+        if (!text) {
+             return response.status(500).json({ error: 'AI failed to generate analysis.', details: responseData });
         }
+        
+        return response.status(200).json({ text });
+
     } catch (error) {
-        console.error('Error calling Gemini Vision API:', error);
+        console.error('Error calling Gemini Vision API:', error.message);
         return response.status(500).json({ error: 'Failed to analyze image.', details: error.message });
     }
 }
