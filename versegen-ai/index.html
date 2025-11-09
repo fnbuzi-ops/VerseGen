@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VerseGen Ai - Fortnite Growth Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Import Supabase Client -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        
+        // These keys are public. They are safe to be here.
+        // Vercel will replace these with your Environment Variables during deployment.
+        // For local testing, replace them manually.
+        const supabaseUrl = '%SUPABASE_URL%';
+        const supabaseAnonKey = '%SUPABASE_ANON_KEY%';
+
+        // Check if placeholders are still present (meaning, we are likely local)
+        if (supabaseUrl === '%SUPABASE_URL%' || supabaseAnonKey === '%SUPABASE_ANON_KEY%') {
+            console.warn("Supabase URL/Key not set. Using fallbacks for local dev.");
+            // Add your local testing keys here if you want
+            // const localUrl = "YOUR_LOCAL_TEST_URL";
+            // const localKey = "YOUR_LOCAL_TEST_ANON_KEY";
+            // window.supabase = createClient(localUrl, localKey);
+        } else {
+            window.supabase = createClient(supabaseUrl, supabaseAnonKey);
+        }
+    </script>
+    <script src="script.js" type="module" defer></script>
+</head>
+<body>
+
+    <!-- Auth Section (Default View) -->
+    <div id="auth-container" class="auth-wrapper">
+        <div class="auth-box">
+            <h1 class="logo">VerseGen Ai</h1>
+            <p class="subtitle">Grow. Sharpen. Upgrade.</p>
+            
+            <div id="auth-forms">
+                <!-- Sign In Form -->
+                <form id="login-form">
+                    <h3>Sign In</h3>
+                    <input type="email" id="login-email" placeholder="Email" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <p class="form-toggle">Need an account? <a href="#" id="show-signup">Sign Up</a></p>
+                </form>
+
+                <!-- Sign Up Form (Hidden by default) -->
+                <form id="signup-form" class_hidden>
+                    <h3>Create Account</h3>
+                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <input type="password" id="signup-password" placeholder="Password (min. 6 chars)" required>
+                    <button type="submit" class="btn btn-primary">Sign Up</button>
+                    <p class="form-toggle">Have an account? <a href="#" id="show-login">Login</a></p>
+                </form>
+            </div>
+            <p id="auth-message" class="message"></p>
+        </div>
+    </div>
+
+    <!-- Main App Section (Hidden until logged in) -->
+    <div id="app-container" class="app-wrapper" class_hidden>
+        <header class="app-header">
+            <h1 class="logo">VerseGen Ai</h1>
+            <div>
+                <span id="user-email"></span>
+                <span id="user-tier-badge" class="badge"></span>
+                <button id="logout-button" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <nav class="app-nav">
+                <button class="nav-btn active" data-target="tab-dashboard">Dashboard</button>
+                <button class="nav-btn" data-target="tab-creator">Creator AI</button>
+                <button class="nav-btn" data-target="tab-coaching">Coaching AI</button>
+                <button class="nav-btn" data-target="tab-hardware" data-tier="paid">Hardware AI</button>
+                <button class="nav-btn" data-target="tab-branding" data-tier="paid">Branding AI</button>
+                <button class="nav-btn" data-target="tab-elite" data-tier="elite">Elite Tools</button>
+            </nav>
+
+            <div class="app-content">
+                <!-- Dashboard Tab -->
+                <div id="tab-dashboard" class="tab-content active">
+                    <h2>Welcome to VerseGen Ai</h2>
+                    <p>This is your hub for all things Fortnite. Use the tabs on the left to access your tools.</p>
+                    <p>Your current tier: <strong id="user-tier-text"></strong>.</p>
+                    <p>Note: Some features are locked based on your tier. (This demo does not include payments, so tiers must be manually updated in the Supabase 'profiles' table).</p>
+                </div>
+
+                <!-- Content Creator AI Tab -->
+                <div id="tab-creator" class="tab-content">
+                    <h2>Content Creator AI</h2>
+                    <p>Generate video ideas, titles, descriptions, and even full scripts.</p>
+                    <form id="creator-form" class="ai-form">
+                        <textarea id="creator-prompt" placeholder="E.g., 'Give me 5 viral video ideas for the new Fortnite season' or 'Write a script outline for a video about improving your aim'" required></textarea>
+                        <button type="submit" class="btn btn-primary">Generate Content</button>
+                    </form>
+                    <div id="creator-result" class="ai-result-box">
+                        <div class="loader" class_hidden></div>
+                        <pre class="ai-result-content"></pre>
+                    </div>
+                </div>
+
+                <!-- Fortnite Coaching AI Tab -->
+                <div id="tab-coaching" class="tab-content">
+                    <h2>Fortnite Coaching AI (VOD Analysis)</h2>
+                    <p>Get feedback on your gameplay. Upload a screenshot from your VOD or clip and ask a specific question.</p>
+                    <form id="coaching-form" class="ai-form">
+                        <textarea id="coaching-prompt" placeholder="E.g., 'What could I have done better in this position?' or 'Analyze my crosshair placement and loadout.'" required></textarea>
+                        <label for="coaching-upload">Upload Screenshot (required):</label>
+                        <input type="file" id="coaching-upload" accept="image/png, image/jpeg" required>
+                        <button type="submit" class="btn btn-primary">Analyze My Gameplay</button>
+                    </form>
+                    <div id="coaching-result" class="ai-result-box">
+                        <div class="loader" class_hidden></div>
+                        <pre class="ai-result-content"></pre>
+                    </div>
+                </div>
+
+                <!-- Hardware AI Tab -->
+                <div id="tab-hardware" class="tab-content" class_locked>
+                    <h2>Hardware Builder AI (Paid Tier)</h2>
+                    <p>Get a custom PC build list based on your budget and performance goals.</p>
+                    <form id="hardware-form" class="ai-form">
+                        <textarea id="hardware-prompt" placeholder="E.g., 'I have a $1000 budget and want to get 240 FPS on performance mode.' or 'What's the best GPU upgrade for my Ryzen 5 3600?'" required></textarea>
+                        <button type="submit" class="btn btn-primary">Build My PC</button>
+                    </form>
+                    <div id="hardware-result" class="ai-result-box">
+                        <div class="loader" class_hidden></div>
+                        <pre class="ai-result-content"></pre>
+                    </div>
+                    <div class="lock-overlay">
+                        <span class="lock-icon">🔒</span>
+                        <p>This feature is available for Paid and Elite members.</p>
+                    </div>
+                </div>
+
+                <!-- Branding AI Tab -->
+                <div id="tab-branding" class="tab-content" class_locked>
+                    <h2>Branding & Thumbnail AI (Paid Tier)</h2>
+                    <p>Generate ideas for your YouTube branding or a full PFP/Thumbnail image.</p>
+                    <form id="branding-form" class="ai-form">
+                        <textarea id="branding-prompt" placeholder="E.g., 'A cool and modern YouTube PFP for a Fortnite player named 'Verse'. Use blue and white.' or 'A thumbnail for a video titled 'I Hit UNREAL In 24 Hours''" required></textarea>
+                        <button type="submit" class="btn btn-primary">Generate Image</button>
+                    </form>
+                    <div id="branding-result" class="ai-result-box">
+                        <div class="loader" class_hidden></div>
+                        <img class="ai-result-image" src="" alt="Generated image" class_hidden>
+                        <pre class="ai-result-content"></pre> <!-- For errors or text responses -->
+                    </div>
+                    <div class="lock-overlay">
+                        <span class="lock-icon">🔒</span>
+                        <p>This feature is available for Paid and Elite members.</p>
+                    </div>
+                </div>
+
+                <!-- Elite Tools Tab -->
+                <div id="tab-elite" class="tab-content" class_locked>
+                    <h2>Elite Tools (Elite Tier)</h2>
+                    <p>Direct Pro-VOD Analysis, AI Content Calendar, and more.</p>
+                    <div class="elite-feature-box">
+                        <h3>Direct Pro-VOD Analysis Queue</h3>
+                        <p>Submit your VOD link for guaranteed analysis. (This form submits to your Supabase DB).</p>
+                        <form id="vod-queue-form" class="ai-form">
+                            <input type="url" id="vod-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                            <textarea id="vod-notes" placeholder="Specific things to look at (e.g., my end-game rotations)" required></textarea>
+                            <button type="submit" class="btn btn-primary">Submit to Queue</button>
+                            <p id="vod-queue-message" class="message"></p>
+                        </form>
+                    </div>
+                    <!-- Other Elite features would be added here -->
+                    <div class="lock-overlay">
+                        <span class="lock-icon">🔒</span>
+                        <p>This feature is available for Elite members only.</p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Message/Toast -->
+    <div id="global-message" class="global-message"></div>
+
+</body>
+</html>
