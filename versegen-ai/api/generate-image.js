@@ -1,6 +1,9 @@
-// --- Vercel Serverless Function ---
-// This file MUST be placed in the /api directory.
-// It will handle POST requests to /api/generate-image
+import { GoogleGenerativeAI } from "@google/genai";
+
+// Vercel handles the environment variable
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = new GoogleGenerativeAI(apiKey);
+const IMAGEN_MODEL = "imagen-3.0-generate-002"; // Use the specific model identifier
 
 export default async function handler(request, response) {
     if (request.method !== 'POST') {
@@ -8,11 +11,7 @@ export default async function handler(request, response) {
     }
 
     const { prompt } = request.body;
-    const apiKey = process.env.GEMINI_API_KEY; // Use the same API key
     
-    // Using Imagen 3 via the Gemini API
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-
     if (!apiKey) {
         return response.status(500).json({ error: 'API key not configured.' });
     }
@@ -20,33 +19,28 @@ export default async function handler(request, response) {
         return response.status(400).json({ error: 'Prompt is required.' });
     }
     
-    // Add context to the user's prompt
-    const enhancedPrompt = `
-        A YouTube thumbnail or profile picture for a Fortnite gamer. 
-        Style: Modern, clean, vibrant, eye-catching. Use blues and whites as primary colors.
-        User prompt: "${prompt}"
-    `;
-
-    const payload = {
-        instances: {
-            prompt: enhancedPrompt
-        },
-        parameters: {
-            sampleCount: 1, // Generate one image
-            aspectRatio: "1:1" // 1:1 for PFP, 16:9 for thumbnail. 1:1 is safer.
-        }
-    };
+    // Enhance prompt for Fortnite/Branding context
+    const enhancedPrompt = `A high-quality, professional ${prompt.toLowerCase().includes('pfp') || prompt.toLowerCase().includes('profile') ? 'profile picture' : 'YouTube thumbnail'} for a competitive Fortnite player. Style is modern, dark blue and light blue color palette, with white accents and neon glow.`;
 
     try {
-        let res = await fetch(apiUrl, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${IMAGEN_MODEL}:predict?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+                instances: {
+                    prompt: enhancedPrompt
+                },
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: prompt.toLowerCase().includes('thumbnail') ? "16:9" : "1:1" 
+                }
+            }),
         });
 
         if (!res.ok) {
-            const errorBody = await res.text();
-            throw new Error(`API request failed with status ${res.status}: ${errorBody}`);
+            const errorBody = await res.json();
+            console.error('Imagen API Error:', errorBody);
+            throw new Error(errorBody.error?.message || `API request failed with status ${res.status}`);
         }
 
         const data = await res.json();
@@ -55,7 +49,7 @@ export default async function handler(request, response) {
             const base64Data = data.predictions[0].bytesBase64Encoded;
             return response.status(200).json({ base64Data });
         } else {
-            return response.status(500).json({ error: 'Invalid API response from image generator.', details: data });
+            return response.status(500).json({ error: 'Image generation failed to return data.' });
         }
     } catch (error) {
         console.error('Error calling Imagen API:', error);
