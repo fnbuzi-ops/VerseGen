@@ -6,39 +6,73 @@
     <title>VerseGen Ai - Fortnite Growth Hub</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Import Supabase Client -->
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
         
-        // These keys are public. They are safe to be here.
-        // Vercel will replace these with your Environment Variables during deployment.
-        // For local testing, replace them manually.
-        const supabaseUrl = '%SUPABASE_URL%';
-        const supabaseAnonKey = '%SUPABASE_ANON_KEY%';
+        // **IMPORTANT:** Since this is client-side code, we use the public URL and ANON key.
+        // NOTE: The backend API files (in /api) use process.env to read secrets securely.
+        const SUPABASE_URL = 'https://allybrktxbgqooqoszpul.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsbHlicmt4YnFnb29xb3N6cHVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MDAxMzIsImV4cCI6MjA3ODI3NjEzMn0.g2WDr9hqO86oNrQVuSlg4pKC0Q5YaVlN8d61QjcuZ1w';
 
-        // Check if placeholders are still present (meaning, we are likely local)
-        if (supabaseUrl === '%SUPABASE_URL%' || supabaseAnonKey === '%SUPABASE_ANON_KEY%') {
-            console.warn("Supabase URL/Key not set. Using fallbacks for local dev.");
-            // Add your local testing keys here if you want
-            // const localUrl = "YOUR_LOCAL_TEST_URL";
-            // const localKey = "YOUR_LOCAL_TEST_ANON_KEY";
-            // window.supabase = createClient(localUrl, localKey);
-        } else {
-            window.supabase = createClient(supabaseUrl, supabaseAnonKey);
-        }
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
     <script src="script.js" type="module" defer></script>
 </head>
 <body>
 
-    <!-- Auth Section (Default View) -->
-    <div id="auth-container" class="auth-wrapper">
-        <div class="auth-box">
+    <div id="global-message" class="global-message"></div>
+
+    <div id="landing-container" class="landing-wrapper">
+        <div class="landing-content">
             <h1 class="logo">VerseGen Ai</h1>
-            <p class="subtitle">Grow. Sharpen. Upgrade.</p>
+            <h2 class="tagline">The All-in-One Hub for Fortnite Content Creators and Grinders.</h2>
+            <p class="description">Sharpen your gameplay, upgrade your hardware, and fast-track your YouTube growth with AI-powered tools.</p>
+            
+            <div class="pricing-grid">
+                <div class="tier-card free">
+                    <h3>Free Version ($0)</h3>
+                    <ul>
+                        <li><span class="check">✓</span> Access to Free Assets & Software Tools</li>
+                        <li><span class="check">✓</span> Community Support & Feedback</li>
+                        <li><span class="check">✓</span> **Fortnite Coaching AI (Full Access)**</li>
+                        <li><span class="check">✓</span> Limited Access to Creator AI</li>
+                    </ul>
+                    <button id="show-auth-free" class="btn btn-primary">Start Free</button>
+                </div>
+                <div class="tier-card paid">
+                    <h3>Paid Version ($12)</h3>
+                    <ul>
+                        <li><span class="check">✓</span> **ALL Free Features**</li>
+                        <li><span class="check">✓</span> 1:1 Personalized Classes (Content/Gameplay/Hardware)</li>
+                        <li><span class="check">✓</span> **Advanced Hardware Builder AI**</li>
+                        <li><span class="check">✓</span> **Premium Creator AI (Branding/Thumbnails)**</li>
+                        <li><span class="check">✓</span> Exclusive Channels & Priority Feedback</li>
+                    </ul>
+                    <button class="btn btn-secondary">Upgrade (Coming Soon)</button>
+                </div>
+                <div class="tier-card elite">
+                    <h3>Elite Version ($25)</h3>
+                    <ul>
+                        <li><span class="check">✓</span> **ALL Paid Features**</li>
+                        <li><span class="check">✓</span> **Direct Pro-VOD Analysis Queue (24hr guarantee)**</li>
+                        <li><span class="check">✓</span> **AI-Driven Content Calendar Generation**</li>
+                        <li><span class="check">✓</span> Personalized 'What-If' Scenario Generator</li>
+                        <li><span class="check">✓</span> Live Coaching Session Booking</li>
+                    </ul>
+                    <button class="btn btn-secondary">Go Elite (Coming Soon)</button>
+                </div>
+            </div>
+
+            <p class="small-link">Already a member? <a href="#" id="show-auth-login">Sign In Here</a></p>
+        </div>
+    </div>
+
+    <div id="auth-container" class="auth-wrapper hidden">
+        <div class="auth-box">
+            <h1 class="logo-small">VerseGen Ai</h1>
+            <a href="#" id="back-to-landing" class="back-link">← Back to Plans</a>
             
             <div id="auth-forms">
-                <!-- Sign In Form -->
                 <form id="login-form">
                     <h3>Sign In</h3>
                     <input type="email" id="login-email" placeholder="Email" required>
@@ -47,9 +81,8 @@
                     <p class="form-toggle">Need an account? <a href="#" id="show-signup">Sign Up</a></p>
                 </form>
 
-                <!-- Sign Up Form (Hidden by default) -->
-                <form id="signup-form" class_hidden>
-                    <h3>Create Account</h3>
+                <form id="signup-form" class="hidden">
+                    <h3>Create Account (Free Tier)</h3>
                     <input type="email" id="signup-email" placeholder="Email" required>
                     <input type="password" id="signup-password" placeholder="Password (min. 6 chars)" required>
                     <button type="submit" class="btn btn-primary">Sign Up</button>
@@ -60,11 +93,10 @@
         </div>
     </div>
 
-    <!-- Main App Section (Hidden until logged in) -->
-    <div id="app-container" class="app-wrapper" class_hidden>
+    <div id="app-container" class="app-wrapper hidden">
         <header class="app-header">
-            <h1 class="logo">VerseGen Ai</h1>
-            <div>
+            <h1 class="logo-small">VerseGen Ai</h1>
+            <div class="user-info">
                 <span id="user-email"></span>
                 <span id="user-tier-badge" class="badge"></span>
                 <button id="logout-button" class="btn btn-secondary">Logout</button>
@@ -74,116 +106,130 @@
         <main class="app-main">
             <nav class="app-nav">
                 <button class="nav-btn active" data-target="tab-dashboard">Dashboard</button>
-                <button class="nav-btn" data-target="tab-creator">Creator AI</button>
-                <button class="nav-btn" data-target="tab-coaching">Coaching AI</button>
-                <button class="nav-btn" data-target="tab-hardware" data-tier="paid">Hardware AI</button>
-                <button class="nav-btn" data-target="tab-branding" data-tier="paid">Branding AI</button>
-                <button class="nav-btn" data-target="tab-elite" data-tier="elite">Elite Tools</button>
+                <button class="nav-btn" data-target="tab-coaching">Coaching AI (ALL)</button>
+                <button class="nav-btn" data-target="tab-creator">Creator AI (Free/Paid)</button>
+                <button class="nav-btn" data-target="tab-branding" data-tier="paid">Branding AI (Paid/Elite)</button>
+                <button class="nav-btn" data-target="tab-hardware" data-tier="paid">Hardware AI (Paid/Elite)</button>
+                <button class="nav-btn" data-target="tab-elite" data-tier="elite">Elite Pro Tools (Elite)</button>
             </nav>
 
             <div class="app-content">
-                <!-- Dashboard Tab -->
                 <div id="tab-dashboard" class="tab-content active">
-                    <h2>Welcome to VerseGen Ai</h2>
-                    <p>This is your hub for all things Fortnite. Use the tabs on the left to access your tools.</p>
-                    <p>Your current tier: <strong id="user-tier-text"></strong>.</p>
-                    <p>Note: Some features are locked based on your tier. (This demo does not include payments, so tiers must be manually updated in the Supabase 'profiles' table).</p>
+                    <h2>Welcome, Commander.</h2>
+                    <p>Your current tier is: <strong id="user-tier-text"></strong>. Access your dedicated tools via the navigation menu.</p>
+                    
+                    <div class="stats-card">
+                        <h3>Your Focus Areas</h3>
+                        <p>Based on your tier, we recommend focusing on the following tools:</p>
+                        <ul id="recommendations">
+                            <li>**Free:** Master the Coaching AI and practice basic content generation.</li>
+                            <li>**Paid:** Utilize the Hardware Builder AI and polish your YouTube branding.</li>
+                            <li>**Elite:** Submit your first Pro-VOD and map out your content calendar.</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- Content Creator AI Tab -->
+                <div id="tab-coaching" class="tab-content">
+                    <h2>Fortnite Coaching AI (VOD Analysis)</h2>
+                    <p>Upload a screenshot from your VOD or clip. Our AI, trained on pro-Fortnite data, will analyze the situation and provide actionable feedback.</p>
+                    <form id="coaching-form" class="ai-form">
+                        <textarea id="coaching-prompt" placeholder="E.g., 'What could I have done better in this 1v1 box fight to secure the elimination?'" required></textarea>
+                        <label for="coaching-upload">Upload Gameplay Screenshot (required):</label>
+                        <input type="file" id="coaching-upload" accept="image/png, image/jpeg" required>
+                        <button type="submit" class="btn btn-primary">Analyze My Gameplay</button>
+                    </form>
+                    <div id="coaching-result" class="ai-result-box">
+                        <div class="loader hidden"></div>
+                        <pre class="ai-result-content"></pre>
+                    </div>
+                </div>
+
                 <div id="tab-creator" class="tab-content">
                     <h2>Content Creator AI</h2>
-                    <p>Generate video ideas, titles, descriptions, and even full scripts.</p>
+                    <p>Generate video ideas, titles, descriptions, and scripts. Elite members have additional branding tools.</p>
                     <form id="creator-form" class="ai-form">
                         <textarea id="creator-prompt" placeholder="E.g., 'Give me 5 viral video ideas for the new Fortnite season' or 'Write a script outline for a video about improving your aim'" required></textarea>
                         <button type="submit" class="btn btn-primary">Generate Content</button>
                     </form>
                     <div id="creator-result" class="ai-result-box">
-                        <div class="loader" class_hidden></div>
+                        <div class="loader hidden"></div>
                         <pre class="ai-result-content"></pre>
                     </div>
                 </div>
 
-                <!-- Fortnite Coaching AI Tab -->
-                <div id="tab-coaching" class="tab-content">
-                    <h2>Fortnite Coaching AI (VOD Analysis)</h2>
-                    <p>Get feedback on your gameplay. Upload a screenshot from your VOD or clip and ask a specific question.</p>
-                    <form id="coaching-form" class="ai-form">
-                        <textarea id="coaching-prompt" placeholder="E.g., 'What could I have done better in this position?' or 'Analyze my crosshair placement and loadout.'" required></textarea>
-                        <label for="coaching-upload">Upload Screenshot (required):</label>
-                        <input type="file" id="coaching-upload" accept="image/png, image/jpeg" required>
-                        <button type="submit" class="btn btn-primary">Analyze My Gameplay</button>
-                    </form>
-                    <div id="coaching-result" class="ai-result-box">
-                        <div class="loader" class_hidden></div>
-                        <pre class="ai-result-content"></pre>
-                    </div>
-                </div>
-
-                <!-- Hardware AI Tab -->
-                <div id="tab-hardware" class="tab-content" class_locked>
-                    <h2>Hardware Builder AI (Paid Tier)</h2>
-                    <p>Get a custom PC build list based on your budget and performance goals.</p>
-                    <form id="hardware-form" class="ai-form">
-                        <textarea id="hardware-prompt" placeholder="E.g., 'I have a $1000 budget and want to get 240 FPS on performance mode.' or 'What's the best GPU upgrade for my Ryzen 5 3600?'" required></textarea>
-                        <button type="submit" class="btn btn-primary">Build My PC</button>
-                    </form>
-                    <div id="hardware-result" class="ai-result-box">
-                        <div class="loader" class_hidden></div>
-                        <pre class="ai-result-content"></pre>
-                    </div>
-                    <div class="lock-overlay">
-                        <span class="lock-icon">🔒</span>
-                        <p>This feature is available for Paid and Elite members.</p>
-                    </div>
-                </div>
-
-                <!-- Branding AI Tab -->
-                <div id="tab-branding" class="tab-content" class_locked>
-                    <h2>Branding & Thumbnail AI (Paid Tier)</h2>
-                    <p>Generate ideas for your YouTube branding or a full PFP/Thumbnail image.</p>
+                <div id="tab-branding" class="tab-content locked">
+                    <h2>Branding & Thumbnail AI (Paid/Elite Tier)</h2>
+                    <p>Generate image ideas for your YouTube branding (PFP, banner art) or a full thumbnail image using the latest models.</p>
                     <form id="branding-form" class="ai-form">
-                        <textarea id="branding-prompt" placeholder="E.g., 'A cool and modern YouTube PFP for a Fortnite player named 'Verse'. Use blue and white.' or 'A thumbnail for a video titled 'I Hit UNREAL In 24 Hours''" required></textarea>
+                        <textarea id="branding-prompt" placeholder="E.g., 'A cool, minimalist YouTube PFP for a Fortnite player named 'Verse'. Use futuristic blue neon against a dark background.' or 'A dramatic thumbnail for a video titled 'I Hit UNREAL In 24 Hours''" required></textarea>
                         <button type="submit" class="btn btn-primary">Generate Image</button>
                     </form>
                     <div id="branding-result" class="ai-result-box">
-                        <div class="loader" class_hidden></div>
-                        <img class="ai-result-image" src="" alt="Generated image" class_hidden>
-                        <pre class="ai-result-content"></pre> <!-- For errors or text responses -->
+                        <div class="loader hidden"></div>
+                        <img class="ai-result-image hidden" src="" alt="Generated image">
+                        <pre class="ai-result-content"></pre>
                     </div>
                     <div class="lock-overlay">
                         <span class="lock-icon">🔒</span>
-                        <p>This feature is available for Paid and Elite members.</p>
+                        <p>Upgrade to **Paid** or **Elite** to unlock the Premium Branding & Image Generation tools.</p>
                     </div>
                 </div>
 
-                <!-- Elite Tools Tab -->
-                <div id="tab-elite" class="tab-content" class_locked>
-                    <h2>Elite Tools (Elite Tier)</h2>
-                    <p>Direct Pro-VOD Analysis, AI Content Calendar, and more.</p>
+                <div id="tab-hardware" class="tab-content locked">
+                    <h2>Advanced Hardware Builder AI (Paid/Elite Tier)</h2>
+                    <p>Get custom PC build suggestions based on your budget and desired FPS targets, optimizing for competitive Fortnite settings.</p>
+                    <form id="hardware-form" class="ai-form">
+                        <textarea id="hardware-prompt" placeholder="E.g., 'I have a $1000 USD budget and want 240+ FPS on performance mode. Build me a PC list.' or 'What's the best CPU/GPU combo for 360 FPS streaming?'" required></textarea>
+                        <button type="submit" class="btn btn-primary">Build My PC</button>
+                    </form>
+                    <div id="hardware-result" class="ai-result-box">
+                        <div class="loader hidden"></div>
+                        <pre class="ai-result-content"></pre>
+                    </div>
+                    <div class="lock-overlay">
+                        <span class="lock-icon">🔒</span>
+                        <p>Upgrade to **Paid** or **Elite** for the Advanced Hardware Builder AI.</p>
+                    </div>
+                </div>
+
+                <div id="tab-elite" class="tab-content locked">
+                    <h2>Elite Pro Tools (Elite Tier)</h2>
+                    <p>Exclusive features for the fastest growth and highest performance.</p>
+                    
                     <div class="elite-feature-box">
-                        <h3>Direct Pro-VOD Analysis Queue</h3>
-                        <p>Submit your VOD link for guaranteed analysis. (This form submits to your Supabase DB).</p>
+                        <h3>1. Direct Pro-VOD Analysis Queue</h3>
+                        <p>Submit your YouTube or Twitch VOD link here for **guaranteed 24-hour analysis** by our top-tier AI and coaching staff. (Elite feature utilizing Supabase integration.)</p>
                         <form id="vod-queue-form" class="ai-form">
-                            <input type="url" id="vod-url" placeholder="https://www.youtube.com/watch?v=..." required>
-                            <textarea id="vod-notes" placeholder="Specific things to look at (e.g., my end-game rotations)" required></textarea>
-                            <button type="submit" class="btn btn-primary">Submit to Queue</button>
+                            <input type="url" id="vod-url" placeholder="Paste YouTube/Twitch VOD Link" required>
+                            <textarea id="vod-notes" placeholder="Specific things to look at (e.g., 'Check my end-game rotation decision at 12:45')" required></textarea>
+                            <button type="submit" class="btn btn-primary">Submit VOD to Elite Queue</button>
                             <p id="vod-queue-message" class="message"></p>
                         </form>
                     </div>
-                    <!-- Other Elite features would be added here -->
+                    
+                    <div class="elite-feature-box">
+                        <h3>2. AI-Driven Content Calendar</h3>
+                        <p>Generate a 7-day or 30-day content calendar tailored for your specific channel niche and growth goals.</p>
+                        <form id="calendar-form" class="ai-form">
+                            <textarea id="calendar-prompt" placeholder="E.g., 'Generate a 30-day content calendar for a channel focusing on competitive zero build strategy.'" required></textarea>
+                            <button type="submit" class="btn btn-primary">Generate Calendar</button>
+                        </form>
+                        <div id="calendar-result" class="ai-result-box">
+                            <div class="loader hidden"></div>
+                            <pre class="ai-result-content"></pre>
+                        </div>
+                    </div>
+
                     <div class="lock-overlay">
                         <span class="lock-icon">🔒</span>
-                        <p>This feature is available for Elite members only.</p>
+                        <p>Upgrade to **Elite** to unlock Pro-Level features.</p>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
 
-    <!-- Global Message/Toast -->
-    <div id="global-message" class="global-message"></div>
-
 </body>
+</html>
+
 </html>
